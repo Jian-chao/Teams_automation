@@ -1,0 +1,14 @@
+{
+  "target_push_chat_id": "19:push-job-group@thread.v2",
+  "poll_interval_seconds": 60,
+  "my_display_name": "Grant",
+  "patterns": [
+    "(?i)(?:please\\s+)?(?:help\\s+)?(?:to\\s+)?push\\s+['\"]?([\\w-]+)['\"]?",
+    "(?i)push\\s+(?:job\\s+)?['\"]?([\\w-]+)['\"]?",
+    "(?i)幫忙\\s*push\\s+([\\w-]+)"
+  ],
+  "azure_ad": {
+    "client_id": "YOUR_CLIENT_ID",
+    "tenant_id": "YOUR_TENANT_ID"
+  }
+}
