@@ -5,6 +5,7 @@ from typing import Optional
 
 from msgraph_beta import GraphServiceClient
 from msgraph_beta.generated.chats.item.messages.forward_to_chat.forward_to_chat_post_request_body import ForwardToChatPostRequestBody
+from msgraph_beta.generated.chats.item.messages.item.set_reaction.set_reaction_post_request_body import SetReactionPostRequestBody
 from msgraph_beta.generated.models.chat_message import ChatMessage
 from msgraph_beta.generated.models.item_body import ItemBody
 
@@ -57,6 +58,50 @@ async def forward_message(
         return result.value[0].forwarded_message_id
     
     raise Exception("Forward operation completed but no message ID returned")
+
+
+async def add_reaction_to_message(
+    graph_client: GraphServiceClient,
+    chat_id: str,
+    message_id: str,
+    reaction: str = "👍"
+) -> bool:
+    """
+    Add a reaction to a message in a chat.
+    
+    Uses MS Graph API beta endpoint: POST /chats/{chatId}/messages/{messageId}/setReaction
+    
+    Args:
+        graph_client: Authenticated GraphServiceClient (beta)
+        chat_id: ID of the chat containing the message
+        message_id: ID of the message to react to
+        reaction: Emoji reaction to add (default: thumbs up)
+        
+    Returns:
+        True if reaction was added successfully, False otherwise
+        
+    Raises:
+        Exception: If adding reaction fails
+    """
+    try:
+        # Build request body with the reaction
+        request_body = SetReactionPostRequestBody(
+            reaction_type=reaction
+        )
+        
+        # Call the API
+        await graph_client.chats.by_chat_id(
+            chat_id
+        ).messages.by_chat_message_id(
+            message_id
+        ).set_reaction.post(request_body)
+        
+        return True
+        
+    except Exception as e:
+        # Log the error but don't fail the overall operation
+        print(f"Failed to add reaction to message {message_id}: {e}")
+        return False
 
 
 class MessageForwarder:

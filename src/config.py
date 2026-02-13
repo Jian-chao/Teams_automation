@@ -54,5 +54,7 @@ def load_config(config_path: str = "config.json") -> Dict[str, Any]:
     # Set default for optional fields
     if "include_self" not in config:
         config["include_self"] = False
+    if "add_reaction_after_forward" not in config:
+        config["add_reaction_after_forward"] = False
     
     return config

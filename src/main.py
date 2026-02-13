@@ -16,7 +16,7 @@ from .chat_fetcher import ChatFetcher
 from .message_monitor import MessageMonitor
 from .message_detector import RegexMessageDetector
 from .duplicate_checker import DuplicateChecker
-from .forwarder import forward_message
+from .forwarder import forward_message, add_reaction_to_message
 from .persistence import PollStatePersistence, ForwardedHistoryPersistence
 
 
@@ -85,7 +85,7 @@ async def check_and_forward(
                             forwarded_id = await forward_message(
                                 graph_client,
                                 source_chat_id=chat_id,
-                                message_id=msg.id,
+                                message_id=msg.id,dk3d
                                 target_chat_id=config["target_push_chat_id"]
                             )
                             
@@ -98,6 +98,19 @@ async def check_and_forward(
                             
                             forwarded_count += 1
                             print(f"  ✓ Forwarded message {msg.id} (Job: {result.job_id})")
+                            
+                            # Add reaction if configured
+                            if config.get("add_reaction_after_forward", False):
+                                try:
+                                    success = await add_reaction_to_message(
+                                        graph_client,
+                                        chat_id,
+                                        msg.id
+                                    )
+                                    if success:
+                                        print(f"  ✓ Added reaction to original message")
+                                except Exception as e:
+                                    print(f"  ⚠ Failed to add reaction: {e}")
                             
                         except Exception as e:
                             print(f"  ✗ Failed to forward: {e}")

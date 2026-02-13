@@ -69,6 +69,8 @@ cp config.json.example config.json
 | `target_push_chat_id` | 目標 push job 群組的 chat ID |
 | `poll_interval_seconds` | 輪詢間隔（秒） |
 | `my_display_name` | 您在 Teams 的顯示名稱 |
+| `include_self` | 是否處理自己發送的訊息（預設：false） |
+| `add_reaction_after_forward` | 轉發後是否在原訊息加上👍反應（預設：false） |
 | `patterns` | 正規表達式清單，需包含 job ID 的擷取群組 |
 | `azure_ad.client_id` | Azure AD 應用程式 ID |
 | `azure_ad.tenant_id` | Azure AD 租戶 ID |

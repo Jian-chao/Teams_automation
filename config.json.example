@@ -3,6 +3,7 @@
   "poll_interval_seconds": 60,
   "my_display_name": "Grant",
   "include_self": false,
+  "add_reaction_after_forward": false,
   "patterns": [
     "(?i)(?:please\\s+)?(?:help\\s+)?(?:to\\s+)?push\\s+['\"]?([\\w-]+)['\"]?",
     "(?i)push\\s+(?:job\\s+)?['\"]?([\\w-]+)['\"]?",
