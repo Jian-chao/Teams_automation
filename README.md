@@ -71,6 +71,7 @@ cp config.json.example config.json
 | `my_display_name` | 您在 Teams 的顯示名稱 |
 | `include_self` | 是否處理自己發送的訊息（預設：false） |
 | `add_reaction_after_forward` | 轉發後是否在原訊息加上👍反應（預設：false） |
+| `forward_delay_range` | 轉發前隨機延遲範圍 [最小秒數, 最大秒數]（預設：[0, 0]） |
 | `patterns` | 正規表達式清單，需包含 job ID 的擷取群組 |
 | `azure_ad.client_id` | Azure AD 應用程式 ID |
 | `azure_ad.tenant_id` | Azure AD 租戶 ID |

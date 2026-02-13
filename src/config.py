@@ -56,5 +56,17 @@ def load_config(config_path: str = "config.json") -> Dict[str, Any]:
         config["include_self"] = False
     if "add_reaction_after_forward" not in config:
         config["add_reaction_after_forward"] = False
+    if "forward_delay_range" not in config:
+        config["forward_delay_range"] = [0, 0]
+    
+    # Validate forward_delay_range
+    if "forward_delay_range" in config:
+        delay_range = config["forward_delay_range"]
+        if not isinstance(delay_range, list) or len(delay_range) != 2:
+            raise ValueError("forward_delay_range must be a list of two numbers [min, max]")
+        if not all(isinstance(x, (int, float)) and x >= 0 for x in delay_range):
+            raise ValueError("forward_delay_range values must be non-negative numbers")
+        if delay_range[0] > delay_range[1]:
+            raise ValueError("forward_delay_range min must be <= max")
     
     return config

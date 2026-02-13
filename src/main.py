@@ -5,6 +5,7 @@ Main entry point for the application.
 Monitors Teams chats for push job requests and forwards them to a designated group.
 """
 import asyncio
+import random
 import sys
 from datetime import datetime
 
@@ -18,6 +19,60 @@ from .message_detector import RegexMessageDetector
 from .duplicate_checker import DuplicateChecker
 from .forwarder import forward_message, add_reaction_to_message
 from .persistence import PollStatePersistence, ForwardedHistoryPersistence
+
+
+async def delayed_forward_with_reaction(
+    graph_client,
+    chat_id: str,
+    message_id: str,
+    job_id: str,
+    target_chat_id: str,
+    delay: float,
+    config: dict,
+    forwarded_persistence: ForwardedHistoryPersistence
+) -> None:
+    """
+    Forward a message after a delay and optionally add reaction.
+    
+    This runs as a background task to avoid blocking other message processing.
+    """
+    try:
+        # Wait for the configured delay
+        if delay > 0:
+            await asyncio.sleep(delay)
+        
+        # Forward the message
+        forwarded_id = await forward_message(
+            graph_client,
+            source_chat_id=chat_id,
+            message_id=message_id,
+            target_chat_id=target_chat_id
+        )
+        
+        # Mark as forwarded
+        forwarded_persistence.mark_forwarded(
+            message_id,
+            job_id,
+            forwarded_id
+        )
+        
+        print(f"  ✓ Forwarded message {message_id} (Job: {job_id})")
+        
+        # Add reaction if configured
+        if config.get("add_reaction_after_forward", False):
+            try:
+                success = await add_reaction_to_message(
+                    graph_client,
+                    chat_id,
+                    message_id
+                )
+                if success:
+                    print(f"  ✓ Added reaction to original message")
+            except Exception as e:
+                print(f"  ⚠ Failed to add reaction: {e}")
+                
+    except Exception as e:
+        print(f"  ✗ Failed to forward message {message_id}: {e}")
 
 
 async def check_and_forward(
@@ -53,6 +108,7 @@ async def check_and_forward(
         )
         
         forwarded_count = 0
+        scheduled_tasks = []
         
         for chat in all_chats:
             # Skip the target push job group itself
@@ -80,44 +136,46 @@ async def check_and_forward(
                     is_dup = await checker.is_duplicate(msg.id, result.job_id)
                     
                     if not is_dup:
-                        # Forward the message
-                        try:
-                            forwarded_id = await forward_message(
+                        # Calculate delay
+                        delay = 0
+                        delay_range = config.get("forward_delay_range", [0, 0])
+                        if delay_range and len(delay_range) == 2:
+                            min_delay, max_delay = delay_range
+                            if min_delay > 0 or max_delay > 0:
+                                if min_delay == max_delay:
+                                    delay = min_delay
+                                else:
+                                    delay = random.uniform(min_delay, max_delay)
+                        
+                        # Schedule forwarding as background task
+                        if delay > 0:
+                            print(f"  📅 Scheduled forwarding in {delay:.1f}s (Job: {result.job_id})")
+                        else:
+                            print(f"  📤 Forwarding immediately (Job: {result.job_id})")
+                        
+                        task = asyncio.create_task(
+                            delayed_forward_with_reaction(
                                 graph_client,
-                                source_chat_id=chat_id,
-                                message_id=msg.id,dk3d
-                                target_chat_id=config["target_push_chat_id"]
-                            )
-                            
-                            # Mark as forwarded
-                            forwarded_persistence.mark_forwarded(
+                                chat_id,
                                 msg.id,
                                 result.job_id,
-                                forwarded_id
+                                config["target_push_chat_id"],
+                                delay,
+                                config,
+                                forwarded_persistence
                             )
-                            
-                            forwarded_count += 1
-                            print(f"  ✓ Forwarded message {msg.id} (Job: {result.job_id})")
-                            
-                            # Add reaction if configured
-                            if config.get("add_reaction_after_forward", False):
-                                try:
-                                    success = await add_reaction_to_message(
-                                        graph_client,
-                                        chat_id,
-                                        msg.id
-                                    )
-                                    if success:
-                                        print(f"  ✓ Added reaction to original message")
-                                except Exception as e:
-                                    print(f"  ⚠ Failed to add reaction: {e}")
-                            
-                        except Exception as e:
-                            print(f"  ✗ Failed to forward: {e}")
+                        )
+                        scheduled_tasks.append(task)
+                        forwarded_count += 1
                     else:
                         print(f"  - Skipped (duplicate): {result.job_id}")
         
-        print(f"  Cycle complete. Forwarded {forwarded_count} messages.")
+        # Report scheduled tasks
+        if scheduled_tasks:
+            print(f"  Cycle complete. Scheduled {forwarded_count} message(s) for forwarding.")
+            print(f"  ({len(scheduled_tasks)} task(s) running in background)")
+        else:
+            print(f"  Cycle complete. No new messages to forward.")
         
     except Exception as e:
         print(f"  Error during check cycle: {e}")
