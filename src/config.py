@@ -51,4 +51,8 @@ def load_config(config_path: str = "config.json") -> Dict[str, Any]:
         if field not in config["azure_ad"]:
             raise ValueError(f"Missing required azure_ad field: {field}")
     
+    # Set default for optional fields
+    if "include_self" not in config:
+        config["include_self"] = False
+    
     return config

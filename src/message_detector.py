@@ -1,6 +1,7 @@
 """
 Message detector module with replaceable interface for future LLM integration.
 """
+import json
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

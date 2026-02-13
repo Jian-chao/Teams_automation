@@ -35,7 +35,11 @@ class MessageMonitor:
         self.my_display_name = my_display_name
         self.persistence = persistence
     
-    async def get_new_messages(self, chat: ChatInfo) -> List[Tuple[str, Any]]:
+    async def get_new_messages(
+        self, 
+        chat: ChatInfo, 
+        include_self: bool = False
+    ) -> List[Tuple[str, Any]]:
         """
         Get new messages from a chat based on its type.
         
@@ -44,6 +48,7 @@ class MessageMonitor:
         
         Args:
             chat: ChatInfo object describing the chat
+            include_self: Whether to include messages from self (default: False)
             
         Returns:
             List of tuples (chat_id, message_object)
@@ -66,8 +71,8 @@ class MessageMonitor:
                 if not msg.body or not msg.body.content:
                     continue
                 
-                # Skip messages from self
-                if self._is_from_self(msg):
+                # Skip messages from self (unless include_self is True)
+                if not include_self and self._is_from_self(msg):
                     continue
                 
                 # Check if message is newer than last poll

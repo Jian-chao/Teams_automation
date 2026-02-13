@@ -2,6 +2,7 @@
   "target_push_chat_id": "19:push-job-group@thread.v2",
   "poll_interval_seconds": 60,
   "my_display_name": "Grant",
+  "include_self": false,
   "patterns": [
     "(?i)(?:please\\s+)?(?:help\\s+)?(?:to\\s+)?push\\s+['\"]?([\\w-]+)['\"]?",
     "(?i)push\\s+(?:job\\s+)?['\"]?([\\w-]+)['\"]?",

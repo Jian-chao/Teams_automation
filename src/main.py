@@ -60,7 +60,10 @@ async def check_and_forward(
                 continue
             
             # Get new messages from this chat
-            new_messages = await monitor.get_new_messages(chat)
+            new_messages = await monitor.get_new_messages(
+                chat, 
+                include_self=config.get("include_self", False)
+            )
             
             for chat_id, msg in new_messages:
                 # Get message content
