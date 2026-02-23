@@ -104,7 +104,8 @@ async def check_and_forward(
         monitor = MessageMonitor(
             graph_client,
             config["my_display_name"],
-            poll_persistence
+            poll_persistence,
+            initial_lookback_seconds=config.get("initial_lookback_seconds", 60)
         )
         
         forwarded_count = 0

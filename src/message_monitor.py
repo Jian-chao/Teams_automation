@@ -1,7 +1,7 @@
 """
 Message monitor module - fetches new messages from chats based on chat type.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Tuple, Any
 
 from .chat_fetcher import ChatInfo, ChatType
@@ -21,7 +21,8 @@ class MessageMonitor:
         self, 
         graph_client, 
         my_display_name: str, 
-        persistence: PollStatePersistence
+        persistence: PollStatePersistence,
+        initial_lookback_seconds: int = 60
     ):
         """
         Initialize message monitor.
@@ -30,10 +31,13 @@ class MessageMonitor:
             graph_client: Authenticated GraphServiceClient
             my_display_name: Display name of the current user (for @mention detection)
             persistence: Poll state persistence instance
+            initial_lookback_seconds: How far back (in seconds) to look for messages
+                when no poll history exists for a chat (i.e. first run for that chat)
         """
         self.graph_client = graph_client
         self.my_display_name = my_display_name
         self.persistence = persistence
+        self.initial_lookback_seconds = initial_lookback_seconds
     
     async def get_new_messages(
         self, 
@@ -54,6 +58,13 @@ class MessageMonitor:
             List of tuples (chat_id, message_object)
         """
         last_poll_time = self.persistence.get_last_poll_time(chat.chat_id)
+        
+        # If no history exists for this chat, fall back to the configured
+        # initial look-back window so we don't process all historical messages.
+        if last_poll_time is None:
+            last_poll_time = datetime.now(timezone.utc) - timedelta(
+                seconds=self.initial_lookback_seconds
+            )
         
         try:
             # Fetch messages from the chat

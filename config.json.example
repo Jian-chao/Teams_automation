@@ -1,6 +1,7 @@
 {
   "target_push_chat_id": "19:push-job-group@thread.v2",
   "poll_interval_seconds": 60,
+  "initial_lookback_seconds": 60,
   "my_display_name": "Grant",
   "include_self": false,
   "add_reaction_after_forward": false,
