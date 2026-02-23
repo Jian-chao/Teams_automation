@@ -15,7 +15,7 @@ from .config import load_config
 from .graph_client import create_graph_client
 from .chat_fetcher import ChatFetcher
 from .message_monitor import MessageMonitor
-from .message_detector import RegexMessageDetector
+from .message_detector import LLMMessageDetector, KeywordPreFilterDetector
 from .duplicate_checker import DuplicateChecker
 from .forwarder import forward_message, add_reaction_to_message
 from .persistence import PollStatePersistence, ForwardedHistoryPersistence
@@ -214,8 +214,11 @@ def main():
         print(f"✗ Failed to initialize Graph client: {e}")
         sys.exit(1)
     
-    # Initialize components
-    detector = RegexMessageDetector(config["patterns"])
+    # Build detector: LLM wrapped behind a cheap keyword pre-filter to save tokens.
+    # Only messages containing push-related words or the standalone "IT" acronym
+    # are forwarded to the LLM for final classification.
+    llm_detector = LLMMessageDetector()
+    detector = KeywordPreFilterDetector(llm_detector)
     poll_persistence = PollStatePersistence()
     forwarded_persistence = ForwardedHistoryPersistence()
     checker = DuplicateChecker(
